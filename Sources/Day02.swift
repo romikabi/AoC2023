@@ -41,13 +41,15 @@ struct Day02: AdventDay {
 
     init<S: StringProtocol>(_ string: S) {
       let parts = string.split(separator: ":")
-      index = parts
+      index =
+        parts
         .first?
         .split(separator: " ")
         .last
         .map { String.init($0) }
         .flatMap(UInt.init) ?? 0
-      rounds = parts
+      rounds =
+        parts
         .last?
         .split(separator: ";")
         .map(Round.init) ?? []

@@ -15,4 +15,9 @@ final class Day04Tests: XCTestCase {
     let challenge = Day04(data: data)
     XCTAssertEqual(String(describing: challenge.part1()), "13")
   }
+
+  func testPart2() {
+    let challenge = Day04(data: data)
+    XCTAssertEqual(String(describing: challenge.part2()), "30")
+  }
 }

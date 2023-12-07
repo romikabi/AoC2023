@@ -6,24 +6,25 @@ struct Day07: AdventDay {
   }
 
   func part1() -> Any {
-    struct Line {
-      let hand: Hand
-      let bid: UInt
-
-      init<S: StringProtocol>(_ line: S) {
-        let space = line.firstIndex(of: " ")!
-        hand = Hand(line.prefix(upTo: space))
-        bid = UInt(String(line.suffix(from: line.index(after: space)))) ?? 0
-      }
+    solve {
+      Line($0, joker: false)
     }
-    let lines = data.split(separator: "\n").map(Line.init)
+  }
 
+  func part2() -> Any {
+    solve {
+      Line($0, joker: true)
+    }
+  }
+
+  private func solve(line: (Substring) -> Line) -> UInt {
+    let lines = data.split(separator: "\n").map(line)
     return
       lines
       .sorted(using: KeyPathComparator(\.hand))
       .enumerated()
       .map { index, line in
-        return UInt(index + 1) * line.bid
+        UInt(index + 1) * line.bid
       }
       .reduce(0, +)
   }
@@ -31,14 +32,25 @@ struct Day07: AdventDay {
   private let data: String
 }
 
+private struct Line {
+  let hand: Hand
+  let bid: UInt
+
+  init<S: StringProtocol>(_ line: S, joker: Bool) {
+    let space = line.firstIndex(of: " ")!
+    hand = Hand(line.prefix(upTo: space), joker: joker)
+    bid = UInt(String(line.suffix(from: line.index(after: space)))) ?? 0
+  }
+}
+
 private struct Hand: Comparable, CustomStringConvertible {
-  init(_ labels: [Label]) {
+  init(_ labels: [Label], joker: Bool) {
     self.labels = labels
-    self.combo = Combo(labels)
+    self.combo = Combo(labels, joker: joker)
   }
 
-  init<S: StringProtocol>(_ s: S) {
-    self.init(s.map(Label.init))
+  init<S: StringProtocol>(_ s: S, joker: Bool) {
+    self.init(s.map { Label($0, joker: joker) }, joker: joker)
   }
 
   static func < (lhs: Hand, rhs: Hand) -> Bool {
@@ -55,11 +67,6 @@ private struct Hand: Comparable, CustomStringConvertible {
   private let labels: [Label]
   private let combo: Combo
 }
-//32T3K two
-//T55J5 three
-//KTJJT doubleTwo
-//KK677 doubleTwo
-//QQQJA three
 
 private enum Combo: Comparable {
   case one
@@ -70,8 +77,25 @@ private enum Combo: Comparable {
   case four
   case five
 
-  init(_ labels: [Label]) {
+  init(_ labels: [Label], joker: Bool) {
+    guard joker else {
+      self.init(labels)
+      return
+    }
+    let (others, jokers) = labels.partitioned(by: \.isJoker)
+    guard !jokers.isEmpty else {
+      self.init(labels)
+      return
+    }
+    self =
+      Set(others).map { other in
+        Combo(others + Array(repeating: other, count: jokers.count))
+      }.max() ?? Combo(labels)
+  }
+
+  private init(_ labels: [Label]) {
     let counts = Dictionary(grouping: labels, by: \.rank).values.map(\.count).sorted()
+
     switch counts {
     case [5]: self = .five
     case [1, 4]: self = .four
@@ -85,10 +109,13 @@ private enum Combo: Comparable {
 }
 
 private struct Label: Comparable, Hashable, CustomStringConvertible {
-  init(_ character: Character) {
+  init(_ character: Character, joker: Bool) {
     switch character {
     case "2"..."9": rank = character.wholeNumberValue ?? 0
     case "T": rank = 10
+    case "J" where joker:
+      rank = 1
+      isJoker = true
     case "J": rank = 11
     case "Q": rank = 12
     case "K": rank = 13
@@ -105,7 +132,7 @@ private struct Label: Comparable, Hashable, CustomStringConvertible {
     switch rank {
     case 2...9: return "\(rank)"
     case 10: return "T"
-    case 11: return "J"
+    case 1, 11: return "J"
     case 12: return "Q"
     case 13: return "K"
     case 14: return "A"
@@ -114,4 +141,5 @@ private struct Label: Comparable, Hashable, CustomStringConvertible {
   }
 
   var rank: Int
+  var isJoker = false
 }

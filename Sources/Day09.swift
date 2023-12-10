@@ -31,9 +31,3 @@ struct Day09: AdventDay {
 
   private let data: String
 }
-
-// 10 3 0 2 0
-// 0
-
-// 10
-// 5

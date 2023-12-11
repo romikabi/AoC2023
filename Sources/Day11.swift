@@ -4,25 +4,44 @@ struct Day11: AdventDay {
   }
 
   func part1() -> Any {
-    var lines = data.split(separator: "\n").map { line in
-      line.map { $0 }
+    solve(warp: 2)
+  }
+
+  func part2() -> Any {
+    solve(warp: 1_000_000)
+  }
+
+  private func solve(warp: Int) -> Any {
+    struct Space {
+      var galaxy: Bool
+      var horizontal = 1
+      var vertical = 1
+    }
+    var spaces = data.split(separator: "\n").map { line in
+      line.map { character in
+        Space(galaxy: character == "#")
+      }
     }
 
-    lines = lines.flatMap { line in
-      line.contains("#") ? [line] : [line, line]
-    }
-
-    for j in lines.first?.indices.reversed() ?? [] {
-      if lines.indices.allSatisfy({ i in lines[i][j] != "#" }) {
-        for i in lines.indices {
-          lines[i].insert(".", at: j)
+    for i in spaces.indices {
+      if !spaces[i].contains(where: \.galaxy) {
+        for j in spaces[i].indices {
+          spaces[i][j].vertical = warp
         }
       }
     }
 
-    let galaxies = lines.indices.flatMap { i in
-      lines[i].indices.compactMap { j in
-        lines[i][j] == "#" ? (i: i, j: j) : nil
+    for j in spaces.first?.indices ?? 0..<0 {
+      if !spaces.indices.contains(where: { i in spaces[i][j].galaxy }) {
+        for i in spaces.indices {
+          spaces[i][j].horizontal = warp
+        }
+      }
+    }
+
+    let galaxies = spaces.indices.flatMap { i in
+      spaces[i].indices.compactMap { j in
+        spaces[i][j].galaxy ? (i: i, j: j) : nil
       }
     }
 
@@ -33,8 +52,20 @@ struct Day11: AdventDay {
         (permutation.first!, permutation.last!)
       }
       .map { first, second -> Int in
-        max(first.i, second.i) - min(first.i, second.i) + max(first.j, second.j)
-          - min(first.j, second.j)
+        var i = min(first.i, second.i)
+        var j = min(first.j, second.j)
+        let maxi = max(first.i, second.i)
+        let maxj = max(first.j, second.j)
+        var sum = 0
+        while i < maxi {
+          sum += spaces[i][j].vertical
+          i += 1
+        }
+        while j < maxj {
+          sum += spaces[i][j].horizontal
+          j += 1
+        }
+        return sum
       }
     return distances.reduce(0, +) / 2
   }

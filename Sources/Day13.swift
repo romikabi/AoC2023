@@ -3,55 +3,39 @@ struct Day13: AdventDay {
     self.data = data
   }
 
-  func part1() async -> Any {
-    await calculate(smudges: 0)
+  func part1() -> Any {
+    calculate(smudges: 0)
   }
 
-  func part2() async -> Any {
-    await calculate(smudges: 1)
+  func part2() -> Any {
+    calculate(smudges: 1)
   }
 
-  private func calculate(smudges: Int) async -> Int {
-    let patterns = data.split(separator: "\n\n")
-
-    return await withTaskGroup(of: Int.self) { group in
-      for pattern in patterns {
-        group.addTask {
-          return await calculate(pattern, smudges: smudges)
-        }
-      }
-
-      return await group.reduce(0, +)
-    }
+  private func calculate(smudges: Int) -> Int {
+    data.split(separator: "\n\n")
+      .map { calculate($0, smudges: smudges) }
+      .reduce(0, +)
   }
 
-  @Sendable private func calculate(_ pattern: Substring, smudges: Int) async -> Int {
+  private func calculate(_ pattern: Substring, smudges: Int) -> Int {
     let rows = pattern.split(separator: "\n").map(Array.init)
     let columns = rows[0].indices.map { index in
       rows.map { $0[index] }
     }
 
-    async let vertical = calculate(columns, smudges: smudges)
-    async let horizontal = calculate(rows, smudges: smudges)
+    let vertical = calculate(columns, smudges: smudges)
+    let horizontal = calculate(rows, smudges: smudges)
 
-    return await vertical + horizontal * 100
+    return vertical + horizontal * 100
   }
 
-  @Sendable private func calculate(_ array: [[Character]], smudges: Int) async -> Int {
-    return await withTaskGroup(of: Optional<Int>.self) { group in
-      for index in array.indices.dropFirst() {
-        group.addTask {
-          calculate(array, mirror: index, smudges: smudges)
-        }
-      }
-
-      return await group.first { mirror in
-        mirror != nil
-      }?.flatMap { $0 } ?? 0
-    }
+  private func calculate(_ array: [[Character]], smudges: Int) -> Int {
+    array.indices.dropFirst().lazy.firstNonNil { index in
+      calculate(array, mirror: index, smudges: smudges)
+    } ?? 0
   }
 
-  @Sendable private func calculate(_ array: [[Character]], mirror: Int, smudges: Int) -> Int? {
+  private func calculate(_ array: [[Character]], mirror: Int, smudges: Int) -> Int? {
     var l = mirror - 1
     var r = mirror
     var smudges = smudges

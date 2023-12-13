@@ -23,13 +23,13 @@ final class Day13Tests: XCTestCase {
 
   func testPart1() async {
     let challenge = Day13(data: data)
-    let result = await challenge.part1()
+    let result = challenge.part1()
     XCTAssertEqual(String(describing: result), "405")
   }
 
   func testPart2() async {
     let challenge = Day13(data: data)
-    let result = await challenge.part2()
+    let result = challenge.part2()
     XCTAssertEqual(String(describing: result), "400")
   }
 }
